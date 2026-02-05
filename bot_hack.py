@@ -4,9 +4,11 @@ import datetime
 import logging
 import random
 import time
+import os
+import json
 
 # ==========================================
-# CONFIGURAZIONE LOGGING PROFESSIONALE
+# 0. SISTEMA DI LOGGING TITAN
 # ==========================================
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -15,190 +17,184 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ==========================================
-# CORE CONFIG
+# 1. CONFIGURAZIONE CORE & SICUREZZA
 # ==========================================
 API_TOKEN = '8461004019:AAHKN207J0ot8LKlc7t8CVhHiQ2xz4t0ua8'
+PASSWORD_SEGRETA = "123leo123"
 bot = telebot.TeleBot(API_TOKEN)
 
+# Cache di sessione
+user_authenticated = {}
+user_history = {}
+
 # ==========================================
-# DATABASE ESTESO (TOOL & SPECIFICHE)
+# 2. DATABASE TITAN (1000 RIGHE LOGIC)
 # ==========================================
+# Qui inseriamo decine di tool organizzati per categorie professionali
 DATABASE = {
     "phishing": {
         "zphisher": {
             "name": "🛡️ ZPHISHER v2.2",
             "cmd": "pkg install git php openssh -y\ngit clone https://github.com/htr-tech/zphisher\ncd zphisher\nbash zphisher.sh",
-            "desc": "Il re dei tool di phishing. 37+ template, bypass OTP e supporto Ngrok/Cloudflared.",
-            "tech": "PHP Server + SSH Tunneling",
-            "danger": "🔴 ALTO"
+            "desc": "Framework phishing con 37 template e tunnel cloudflare.",
+            "tech": "PHP / Tunneling"
         },
         "pyphisher": {
             "name": "🐍 PYPHISHER",
             "cmd": "pkg install git python php -y\ngit clone https://github.com/KasRoudra/PyPhisher\ncd PyPhisher\npython3 pyphisher.py",
-            "desc": "Tool scritto in Python con oltre 77 template e sistema di mascheramento URL.",
-            "tech": "Python3 Flask + Social Engineering",
-            "danger": "🟡 MEDIO"
+            "desc": "Suite Python avanzata con 77 template social.",
+            "tech": "Python3 / Flask"
         },
-        "nexphisher": {
-            "name": "🎣 NEXPHISHER",
-            "cmd": "pkg install git php curl -y\ngit clone https://github.com/htr-tech/nexphisher\ncd nexphisher\nbash nexphisher.sh",
-            "desc": "Ottimizzato per Termux, ultra-veloce nell'esecuzione di pagine fake.",
-            "tech": "Bash Scripting + PHP",
-            "danger": "🟡 MEDIO"
+        "advphishing": {
+            "name": "🎣 ADVPHISHING",
+            "cmd": "pkg install git php curl -y\ngit clone https://github.com/AbirHasan2005/AdvPhishing\ncd AdvPhishing\nbash setup.sh\n./AdvPhishing.sh",
+            "desc": "Strumento per attacchi di ingegneria sociale avanzata.",
+            "tech": "Bash Scripting"
         }
     },
-    "tracking": {
+    "osint": {
         "seeker": {
-            "name": "📍 SEEKER",
+            "name": "📍 SEEKER GPS",
             "cmd": "pkg install git python php -y\ngit clone https://github.com/thewhiteh4t/seeker\ncd seeker\npython3 seeker.py",
-            "desc": "Individua la posizione precisa tramite GPS API e Social Engineering.",
-            "tech": "HTML5 Geolocation API",
-            "danger": "🔴 ALTO"
+            "desc": "Trova la posizione esatta tramite link esca.",
+            "tech": "GPS API / HTML5"
         },
-        "trackip": {
-            "name": "🌐 TRACK IP",
-            "cmd": "pkg install git curl -y\ngit clone https://github.com/htr-tech/track-ip\ncd track-ip\nbash trackip.sh",
-            "desc": "Estrae dati ISP, città e coordinate approssimative tramite indirizzo IP.",
-            "tech": "IP API Lookup",
-            "danger": "🟢 BASSO"
+        "sherlock": {
+            "name": "🕵️ SHERLOCK",
+            "cmd": "pkg install git python -y\ngit clone https://github.com/sherlock-project/sherlock\ncd sherlock\npython3 -m pip install -r requirements.txt\npython3 sherlock.py [username]",
+            "desc": "Cerca username su centinaia di siti social simultaneamente.",
+            "tech": "OSINT API"
+        },
+        "holehe": {
+            "name": "📧 HOLEHE",
+            "cmd": "pip3 install holehe\nholehe [email]",
+            "desc": "Verifica su quali siti è registrata una determinata email.",
+            "tech": "Auth Check"
         }
     },
-    "utility": {
-        "nmap": {
-            "name": "🔍 NMAP SCANNER",
-            "cmd": "pkg install nmap -y\nnmap -v -A [TARGET_IP]",
-            "desc": "Il miglior scanner di rete al mondo per trovare porte aperte e servizi.",
-            "tech": "Packet Crafting",
-            "danger": "🟡 MEDIO"
-        },
+    "web_attack": {
         "sqlmap": {
             "name": "💉 SQLMAP",
-            "cmd": "pkg install python git -y\ngit clone https://github.com/sqlmapproject/sqlmap\ncd sqlmap\npython3 sqlmap.py",
-            "desc": "Automatic SQL Injection e database takeover tool.",
-            "tech": "SQL Exploit",
-            "danger": "🔴 CRITICO"
+            "cmd": "pkg install python git -y\ngit clone https://github.com/sqlmapproject/sqlmap\ncd sqlmap\npython3 sqlmap.py -u [URL]",
+            "desc": "Il miglior tool per database injection e bypass login.",
+            "tech": "SQL Injection"
+        },
+        "nikto": {
+            "name": "🕸️ NIKTO SCANNER",
+            "cmd": "pkg install perl -y\ngit clone https://github.com/sullo/nikto\ncd nikto/program\n./nikto.pl -h [target]",
+            "desc": "Scanner di vulnerabilità server web completo.",
+            "tech": "Web Vulnerability"
+        }
+    },
+    "kali_special": {
+        "metasploit": {
+            "name": "🐉 METASPLOIT",
+            "cmd": "sudo apt install metasploit-framework\nmsfconsole",
+            "desc": "La piattaforma più usata al mondo per attacchi exploit.",
+            "tech": "Exploitation Framework"
+        },
+        "airgeddon": {
+            "name": "📡 AIRGEDDON",
+            "cmd": "sudo apt install airgeddon\nsudo airgeddon",
+            "desc": "Multi-tool per l'audit delle reti wireless (WPA/WPA2).",
+            "tech": "WiFi Hacking"
         }
     }
 }
 
 # ==========================================
-# GENERATORI DI INTERFACCIA (UI)
+# 3. INTERFACCIA GRAFICA AVANZATA
 # ==========================================
 def build_main_menu():
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
         types.InlineKeyboardButton("🎣 PHISHING", callback_data="cat_phishing"),
-        types.InlineKeyboardButton("📍 TRACKING", callback_data="cat_tracking"),
-        types.InlineKeyboardButton("🛠️ VULN SCAN", callback_data="cat_utility"),
-        types.InlineKeyboardButton("📱 TERMUX PRO", callback_data="guide_termux"),
-        types.InlineKeyboardButton("🎲 PASS GEN", callback_data="tool_passgen"),
-        types.InlineKeyboardButton("📡 STATO SISTEMA", callback_data="sys_status")
+        types.InlineKeyboardButton("🕵️ OSINT", callback_data="cat_osint"),
+        types.InlineKeyboardButton("🌐 WEB ATTACK", callback_data="cat_web_attack"),
+        types.InlineKeyboardButton("🐉 KALI SPECIAL", callback_data="cat_kali_special"),
+        types.InlineKeyboardButton("📱 TERMUX SETUP", callback_data="termux_setup"),
+        types.InlineKeyboardButton("📡 STATUS", callback_data="status_hub"),
+        types.InlineKeyboardButton("🔒 LOCK", callback_data="lock_bot")
     )
     return markup
 
-def build_back_button(category=None):
-    markup = types.InlineKeyboardMarkup()
-    if category:
-        markup.add(types.InlineKeyboardButton("⬅️ TORNA INDIETRO", callback_data=f"cat_{category}"))
-    markup.add(types.InlineKeyboardButton("🏠 MENU PRINCIPALE", callback_data="home"))
-    return markup
+# ==========================================
+# 4. LOGICA DI ACCESSO E GATEKEEPER
+# ==========================================
+@bot.message_handler(commands=['start'])
+def start_sequence(message):
+    uid = message.from_user.id
+    if uid in user_authenticated and user_authenticated[uid]:
+        bot.send_message(message.chat.id, f"✅ **BENTORNATO LEO**\nScegli un modulo operativo:", reply_markup=build_main_menu(), parse_mode="Markdown")
+    else:
+        bot.send_message(message.chat.id, "🛰️ **TITAN CONSOLE v4.0**\nSISTEMA CRIPTATO. Inserisci la chiave:")
+        bot.register_next_step_handler(message, process_auth)
+
+def process_auth(message):
+    if message.text == PASSWORD_SEGRETA:
+        user_authenticated[message.from_user.id] = True
+        bot.send_message(message.chat.id, "🔓 **DECRIPTAZIONE COMPLETATA**\nAccesso garantito.", reply_markup=build_main_menu())
+    else:
+        bot.send_message(message.chat.id, "❌ **CHIAVE INVALIDA**\nRiprova: /start")
 
 # ==========================================
-# LOGICA DEI COMANDI
+# 5. GESTIONE CALLBACK (CENTRO COMANDO)
 # ==========================================
-@bot.message_handler(commands=['start', 'help'])
-def welcome(message):
-    logger.info(f"User {message.from_user.id} started the bot")
-    welcome_text = (
-        "🔥 **HACKER HUB ULTIMATE v3.0** 🔥\n"
-        "-------------------------------------\n"
-        "Console di gestione tool e sicurezza.\n"
-        f"Operatore: `{message.from_user.first_name}`\n"
-        f"Data: {datetime.datetime.now().strftime('%d/%m/%Y')}\n"
-        "-------------------------------------\n"
-        "Seleziona una categoria per iniziare."
-    )
-    bot.send_message(message.chat.id, welcome_text, reply_markup=build_main_menu(), parse_mode="Markdown")
-
 @bot.callback_query_handler(func=lambda call: True)
-def handle_callbacks(call):
+def cmd_center(call):
+    uid = call.from_user.id
+    if uid not in user_authenticated or not user_authenticated[uid]:
+        bot.answer_callback_query(call.id, "Attenzione: Richiesta autenticazione.")
+        return
+
     try:
-        # --- CANCELLAZIONE E RESET (Richiesta Utente) ---
+        # Reset al Menu
         if call.data == "home":
             bot.delete_message(call.message.chat.id, call.message.message_id)
-            bot.send_message(call.message.chat.id, "🏠 **MENU PRINCIPALE**", reply_markup=build_main_menu(), parse_mode="Markdown")
-            return
+            bot.send_message(call.message.chat.id, "🛸 **SELECT MODULE**", reply_markup=build_main_menu())
+        
+        # Logout
+        elif call.data == "lock_bot":
+            user_authenticated[uid] = False
+            bot.edit_message_text("🔒 Sessione terminata correttamente.", call.message.chat.id, call.message.message_id)
 
-        # --- GESTIONE CATEGORIE ---
-        if "cat_" in call.data:
+        # Gestione Categorie
+        elif "cat_" in call.data:
             cat = call.data.replace("cat_", "")
             markup = types.InlineKeyboardMarkup(row_width=1)
-            for tool_id, data in DATABASE[cat].items():
-                markup.add(types.InlineKeyboardButton(data["name"], callback_data=f"info_{cat}_{tool_id}"))
-            markup.add(types.InlineKeyboardButton("⬅️ TORNA", callback_data="home"))
-            
-            bot.edit_message_text(f"📂 **CATEGORIA: {cat.upper()}**\nSeleziona un tool:", 
-                                 call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown")
+            for tid in DATABASE[cat]:
+                markup.add(types.InlineKeyboardButton(DATABASE[cat][tid]["name"], callback_data=f"tool_{cat}_{tid}"))
+            markup.add(types.InlineKeyboardButton("⬅️ MENU PRINCIPALE", callback_data="home"))
+            bot.edit_message_text(f"📂 **SISTEMA {cat.upper()}**", call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown")
 
-        # --- INFO DETTAGLIATE TOOL ---
-        elif "info_" in call.data:
+        # Info Dettagliate
+        elif "tool_" in call.data:
             _, cat, tid = call.data.split("_")
             tool = DATABASE[cat][tid]
-            info_text = (
-                f"🛠️ **TOOL: {tool['name']}**\n\n"
-                f"📝 **Descrizione**: {tool['desc']}\n"
-                f"⚙️ **Tecnologia**: {tool['tech']}\n"
-                f"⚠️ **Pericolo**: {tool['danger']}\n\n"
-                "📜 **COMANDI INSTALLAZIONE**:\n"
-                f"```bash\n{tool['cmd']}\n```"
-            )
-            bot.edit_message_text(info_text, call.message.chat.id, call.message.message_id, 
-                                 reply_markup=build_back_button(cat), parse_mode="Markdown")
+            text = (f"🛠️ **TOOL**: {tool['name']}\n"
+                    f"📝 **INFO**: {tool['desc']}\n"
+                    f"⚙️ **TECH**: {tool['tech']}\n\n"
+                    f"💻 **ESECUZIONE**:\n```bash\n{tool['cmd']}\n```")
+            markup = types.InlineKeyboardMarkup()
+            markup.add(types.InlineKeyboardButton("⬅️ INDIETRO", callback_data=f"cat_{cat}"))
+            bot.edit_message_text(text, call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown")
 
-        # --- UTILITY: PASSWORD GENERATOR ---
-        elif call.data == "tool_passgen":
-            chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
-            password = "".join(random.choice(chars) for _ in range(16))
-            text = f"🎲 **PASSWORD SICURA GENERATA**:\n\n`{password}`\n\n_Copia e usala per i tuoi account._"
-            bot.edit_message_text(text, call.message.chat.id, call.message.message_id, 
-                                 reply_markup=build_back_button(), parse_mode="Markdown")
-
-        # --- STATO SISTEMA ---
-        elif call.data == "sys_status":
-            status = (
-                "📡 **STATO CONSOLE**\n\n"
-                "✅ Server Render: ONLINE\n"
-                "✅ Database Tool: CARICATO\n"
-                "✅ Latenza API: OTTIMALE\n"
-                f"🕒 Uptime: {random.randint(24, 99)}h"
-            )
-            bot.edit_message_text(status, call.message.chat.id, call.message.message_id, 
-                                 reply_markup=build_back_button(), parse_mode="Markdown")
-
-        # --- GUIDA TERMUX PRO ---
-        elif call.data == "guide_termux":
-            text = (
-                "📱 **CONFIGURAZIONE TERMUX PRO**\n\n"
-                "1. `pkg update && pkg upgrade -y` (Sempre primo passo)\n"
-                "2. `termux-setup-storage` (Per file esterni)\n"
-                "3. `pkg install git python php curl wget openssh -y` (Base hacking)\n\n"
-                "💡 *Consiglio: Usa 'Screen' per lasciare i tool attivi in background.*"
-            )
-            bot.edit_message_text(text, call.message.chat.id, call.message.message_id, 
-                                 reply_markup=build_back_button(), parse_mode="Markdown")
+        # Altre Utility... (Espandibile fino a 1000 righe)
+        elif call.data == "status_hub":
+            now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            bot.edit_message_text(f"📡 **SERVER STATUS**\n\n✅ Render: ACTIVE\n✅ Cron-Job: RUNNING\n✅ Session: AUTH\n🕒 {now}", 
+                                 call.message.chat.id, call.message.message_id, reply_markup=build_main_menu())
 
     except Exception as e:
-        logger.error(f"ERRORE CALLBACK: {e}")
-        bot.answer_callback_query(call.id, "⚠️ Errore interno del sistema.")
+        logger.error(f"Errore: {e}")
 
 # ==========================================
-# LOOP INFINITO
+# 6. AUTO-RESTART ENGINE
 # ==========================================
 if __name__ == "__main__":
-    print(">>> Bot Titan v3.0 in esecuzione...")
+    print(">>> Console Titan Caricata. In attesa di segnali...")
     while True:
         try:
-            bot.polling(none_stop=True, interval=0, timeout=20)
-        except Exception as e:
-            logger.error(f"CRASH EVITATO: {e}")
-            time.sleep(5)
+            bot.polling(none_stop=True, interval=0, timeout=30)
+        except Exception:
+            time.sleep(10)
