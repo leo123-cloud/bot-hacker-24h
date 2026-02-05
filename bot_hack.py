@@ -1,7 +1,7 @@
 import telebot
 from telebot import types
 
-# Token già inserito e verificato
+# Token inserito correttamente
 API_TOKEN = '8461004019:AAHKN207J0ot8LKlc7t8CVhHiQ2xz4t0ua8'
 bot = telebot.TeleBot(API_TOKEN)
 
@@ -22,15 +22,13 @@ def callback_inline(call):
     
     if "_cmd" in call.data:
         tool = call.data.replace("_cmd", "")
-        if tool == "zphisher":
-            text = "💻 **COMANDI ZPHISHER**:\n`git clone https://github.com/htr-tech/zphisher` \n`cd zphisher` \n`bash zphisher.sh`"
-        elif tool == "seeker":
-            text = "💻 **COMANDI SEEKER**:\n`git clone https://github.com/thewhiteh4t/seeker` \n`cd seeker` \n`python3 seeker.py`"
-        elif tool == "nexphisher":
-            text = "💻 **COMANDI NEXPHISHER**:\n`git clone https://github.com/htr-tech/nexphisher` \n`cd nexphisher` \n`bash nexphisher.sh`"
-        elif tool == "pyphisher":
-            text = "💻 **COMANDI PYPHISHER**:\n`git clone https://github.com/KasRoudra/PyPhisher` \n`cd PyPhisher` \n`python3 pyphisher.py`"
-        
+        commands = {
+            "zphisher": "💻 **COMANDI ZPHISHER**:\n`git clone https://github.com/htr-tech/zphisher` \n`cd zphisher` \n`bash zphisher.sh`",
+            "seeker": "💻 **COMANDI SEEKER**:\n`git clone https://github.com/thewhiteh4t/seeker` \n`cd seeker` \n`python3 seeker.py`",
+            "nexphisher": "💻 **COMANDI NEXPHISHER**:\n`git clone https://github.com/htr-tech/nexphisher` \n`cd nexphisher` \n`bash nexphisher.sh`",
+            "pyphisher": "💻 **COMANDI PYPHISHER**:\n`git clone https://github.com/KasRoudra/PyPhisher` \n`cd PyPhisher` \n`python3 pyphisher.py`"
+        }
+        text = commands.get(tool, "Errore caricamento comandi.")
         info_btn = types.InlineKeyboardButton("ℹ️ INFORMAZIONI", callback_data=f"{tool}_info")
         back_btn = types.InlineKeyboardButton("⬅️ TORNA AL MENU", callback_data='home')
         markup.add(info_btn, back_btn)
@@ -43,7 +41,7 @@ def callback_inline(call):
             "nexphisher": "Phishing avanzato con supporto tunneling.",
             "pyphisher": "Tool Python con 70+ template e mascheramento."
         }
-        text = f"ℹ️ **INFO {tool.upper()}**:\n{descriptions.get(tool, 'Descrizione non disponibile.')}"
+        text = f"ℹ️ **INFO {tool.upper()}**:\n{descriptions.get(tool)}"
         back_btn = types.InlineKeyboardButton("⬅️ TORNA AI COMANDI", callback_data=f"{tool}_cmd")
         markup.add(back_btn)
 
