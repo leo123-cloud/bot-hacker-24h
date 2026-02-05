@@ -1,44 +1,63 @@
 import telebot
 from telebot import types
 
-API_TOKEN = '8461004019:AAHKN207J0ot8LKlc7t8CVhHiQ2xz4t0ua8'
+# Inserisci qui il tuo TOKEN di BotFather
+API_TOKEN = 'IL_TUO_TOKEN_QUI'
 bot = telebot.TeleBot(API_TOKEN)
-
-def main_menu():
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    markup.add(
-        types.InlineKeyboardButton("🌐 Zphisher", callback_data='z1'),
-        types.InlineKeyboardButton("📍 Seeker", callback_data='s1'),
-        types.InlineKeyboardButton("🔍 Infoga", callback_data='i1'),
-        types.InlineKeyboardButton("💣 DarkFly", callback_data='d1')
-    )
-    return markup
-
-def back_button():
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("⬅️ TORNA AL MENU", callback_data='home'))
-    return markup
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    testo = "🥷 **SISTEMA ATTIVO** 🔓\n\nScegli un modulo da iniettare:"
-    bot.reply_to(message, testo, reply_markup=main_menu(), parse_mode='Markdown')
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    btn1 = types.InlineKeyboardButton("🛡️ Zphisher", callback_data='zphisher_cmd')
+    btn2 = types.InlineKeyboardButton("📍 Seeker", callback_data='seeker_cmd')
+    btn3 = types.InlineKeyboardButton("🎣 Nexphisher", callback_data='nexphisher_cmd')
+    btn4 = types.InlineKeyboardButton("🐍 PyPhisher", callback_data='pyphisher_cmd')
+    markup.add(btn1, btn2, btn3, btn4)
+    
+    bot.reply_to(message, "🔥 **BENVENUTO NEL BOT HACKER** 🔥\nScegli un tool per vedere i comandi di installazione:", reply_markup=markup, parse_mode="Markdown")
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
-    if call.data == 'home':
-        bot.edit_message_text("⚙️ **MENU PRINCIPALE**", call.message.chat.id, call.message.message_id, reply_markup=main_menu(), parse_mode='Markdown')
-    elif call.data == 'z1':
-        res = "🚀 **ZPHISHER**\n\n📥 **INSTALLA**:\n`pkg install git php -y`\n`git clone https://github.com/htr-tech/zphisher`\n\n▶️ **LANCIO**:\n`cd zphisher` && `bash zphisher.sh`"
-        bot.edit_message_text(res, call.message.chat.id, call.message.message_id, reply_markup=back_button(), parse_mode='Markdown')
-    elif call.data == 's1':
-        res = "📡 **SEEKER**\n\n📥 **INSTALLA**:\n`pkg install git python php -y`\n`git clone https://github.com/thewhiteh4t/seeker`\n\n▶️ **LANCIO**:\n`cd seeker` && `python3 seeker.py`"
-        bot.edit_message_text(res, call.message.chat.id, call.message.message_id, reply_markup=back_button(), parse_mode='Markdown')
-    elif call.data == 'i1':
-        res = "🔍 **INFOGA**\n\n📥 **INSTALLA**:\n`pkg install git python -y`\n`git clone https://github.com/m4ll0k/Infoga`\n\n▶️ **LANCIO**:\n`cd Infoga` && `python3 infoga.py`"
-        bot.edit_message_text(res, call.message.chat.id, call.message.message_id, reply_markup=back_button(), parse_mode='Markdown')
-    elif call.data == 'd1':
-        res = "💣 **DARKFLY**\n\n📥 **INSTALLA**:\n`pkg install git python2 -y`\n`git clone https://github.com/Ranginang67/DarkFly-Tool`\n\n▶️ **LANCIO**:\n`cd DarkFly-Tool` && `python2 install.py`"
-        bot.edit_message_text(res, call.message.chat.id, call.message.message_id, reply_markup=back_button(), parse_mode='Markdown')
+    markup = types.InlineKeyboardMarkup()
+    
+    # Gestione COMANDI
+    if "_cmd" in call.data:
+        tool = call.data.replace("_cmd", "")
+        if tool == "zphisher":
+            text = "💻 **COMANDI ZPHISHER**:\n`git clone https://github.com/htr-tech/zphisher` \n`cd zphisher` \n`bash zphisher.sh`"
+        elif tool == "seeker":
+            text = "💻 **COMANDI SEEKER**:\n`git clone https://github.com/thewhiteh4t/seeker` \n`cd seeker` \n`python3 seeker.py`"
+        elif tool == "nexphisher":
+            text = "💻 **COMANDI NEXPHISHER**:\n`git clone https://github.com/htr-tech/nexphisher` \n`cd nexphisher` \n`bash nexphisher.sh`"
+        elif tool == "pyphisher":
+            text = "💻 **COMANDI PYPHISHER**:\n`git clone https://github.com/KasRoudra/PyPhisher` \n`cd PyPhisher` \n`python3 pyphisher.py`"
+        
+        info_btn = types.InlineKeyboardButton("ℹ️ INFORMAZIONI", callback_data=f"{tool}_info")
+        back_btn = types.InlineKeyboardButton("⬅️ TORNA AL MENU", callback_data='home')
+        markup.add(info_btn)
+        markup.add(back_btn)
+
+    # Gestione INFORMAZIONI
+    elif "_info" in call.data:
+        tool = call.data.replace("_info", "")
+        if tool == "zphisher":
+            text = "ℹ️ **INFO ZPHISHER**:\nTool di phishing con oltre 30 template pronti per social e siti web."
+        elif tool == "seeker":
+            text = "ℹ️ **INFO SEEKER**:\nTrova la posizione esatta (GPS) del bersaglio tramite un semplice link."
+        elif tool == "nexphisher":
+            text = "ℹ️ **INFO NEXPHISHER**:\nVersione migliorata di Zphisher con supporto per tunneling avanzati."
+        elif tool == "pyphisher":
+            text = "ℹ️ **INFO PYPHISHER**:\nPotente tool in Python con 70+ template e mascheramento link."
+        
+        back_btn = types.InlineKeyboardButton("⬅️ TORNA AI COMANDI", callback_data=f"{tool}_cmd")
+        markup.add(back_btn)
+
+    # Torna alla Home
+    elif call.data == "home":
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        send_welcome(call.message)
+        return
+
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=markup, parse_mode="Markdown")
 
 bot.polling()
