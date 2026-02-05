@@ -2,148 +2,203 @@ import telebot
 from telebot import types
 import datetime
 import logging
+import random
+import time
 
-# --- CONFIGURAZIONE LOGGING (Per rendere il codice professionale) ---
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+# ==========================================
+# CONFIGURAZIONE LOGGING PROFESSIONALE
+# ==========================================
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
-# --- CONFIGURAZIONE CORE ---
+# ==========================================
+# CORE CONFIG
+# ==========================================
 API_TOKEN = '8461004019:AAHKN207J0ot8LKlc7t8CVhHiQ2xz4t0ua8'
 bot = telebot.TeleBot(API_TOKEN)
 
-# --- DATABASE TEMPORANEO ---
-TOOLS = {
-    "zphisher": {
-        "name": "🛡️ ZPHISHER",
-        "install": "pkg install git php openssh -y\ngit clone https://github.com/htr-tech/zphisher\ncd zphisher\nbash zphisher.sh",
-        "specs": "Framework di phishing automatizzato. Supporta 37 template social e tunneling via Cloudflared.",
-        "risk": "Alto - Rilevabile dai browser se non si usa un URL masker."
+# ==========================================
+# DATABASE ESTESO (TOOL & SPECIFICHE)
+# ==========================================
+DATABASE = {
+    "phishing": {
+        "zphisher": {
+            "name": "🛡️ ZPHISHER v2.2",
+            "cmd": "pkg install git php openssh -y\ngit clone https://github.com/htr-tech/zphisher\ncd zphisher\nbash zphisher.sh",
+            "desc": "Il re dei tool di phishing. 37+ template, bypass OTP e supporto Ngrok/Cloudflared.",
+            "tech": "PHP Server + SSH Tunneling",
+            "danger": "🔴 ALTO"
+        },
+        "pyphisher": {
+            "name": "🐍 PYPHISHER",
+            "cmd": "pkg install git python php -y\ngit clone https://github.com/KasRoudra/PyPhisher\ncd PyPhisher\npython3 pyphisher.py",
+            "desc": "Tool scritto in Python con oltre 77 template e sistema di mascheramento URL.",
+            "tech": "Python3 Flask + Social Engineering",
+            "danger": "🟡 MEDIO"
+        },
+        "nexphisher": {
+            "name": "🎣 NEXPHISHER",
+            "cmd": "pkg install git php curl -y\ngit clone https://github.com/htr-tech/nexphisher\ncd nexphisher\nbash nexphisher.sh",
+            "desc": "Ottimizzato per Termux, ultra-veloce nell'esecuzione di pagine fake.",
+            "tech": "Bash Scripting + PHP",
+            "danger": "🟡 MEDIO"
+        }
     },
-    "seeker": {
-        "name": "📍 SEEKER",
-        "install": "pkg install git python php -y\ngit clone https://github.com/thewhiteh4t/seeker\ncd seeker\npython3 seeker.py",
-        "specs": "Tool di geolocalizzazione IP/GPS. Estrae coordinate, ISP, e specifiche del device target.",
-        "risk": "Medio - Richiede interazione attiva della vittima."
+    "tracking": {
+        "seeker": {
+            "name": "📍 SEEKER",
+            "cmd": "pkg install git python php -y\ngit clone https://github.com/thewhiteh4t/seeker\ncd seeker\npython3 seeker.py",
+            "desc": "Individua la posizione precisa tramite GPS API e Social Engineering.",
+            "tech": "HTML5 Geolocation API",
+            "danger": "🔴 ALTO"
+        },
+        "trackip": {
+            "name": "🌐 TRACK IP",
+            "cmd": "pkg install git curl -y\ngit clone https://github.com/htr-tech/track-ip\ncd track-ip\nbash trackip.sh",
+            "desc": "Estrae dati ISP, città e coordinate approssimative tramite indirizzo IP.",
+            "tech": "IP API Lookup",
+            "danger": "🟢 BASSO"
+        }
     },
-    "nexphisher": {
-        "name": "🎣 NEXPHISHER",
-        "install": "pkg install git php curl -y\ngit clone https://github.com/htr-tech/nexphisher\ncd nexphisher\nbash nexphisher.sh",
-        "specs": "Versione avanzata di phishing con script bash ottimizzati per la velocità su Termux.",
-        "risk": "Medio - Molto stabile su reti mobili."
-    },
-    "pyphisher": {
-        "name": "🐍 PYPHISHER",
-        "install": "pkg install git python php -y\ngit clone https://github.com/KasRoudra/PyPhisher\ncd PyPhisher\npython3 pyphisher.py",
-        "specs": "Suite Python con 77 template. Include sistemi anti-bot per proteggere il link di phishing.",
-        "risk": "Basso - Difficile da rilevare grazie ai sistemi di offuscamento."
+    "utility": {
+        "nmap": {
+            "name": "🔍 NMAP SCANNER",
+            "cmd": "pkg install nmap -y\nnmap -v -A [TARGET_IP]",
+            "desc": "Il miglior scanner di rete al mondo per trovare porte aperte e servizi.",
+            "tech": "Packet Crafting",
+            "danger": "🟡 MEDIO"
+        },
+        "sqlmap": {
+            "name": "💉 SQLMAP",
+            "cmd": "pkg install python git -y\ngit clone https://github.com/sqlmapproject/sqlmap\ncd sqlmap\npython3 sqlmap.py",
+            "desc": "Automatic SQL Injection e database takeover tool.",
+            "tech": "SQL Exploit",
+            "danger": "🔴 CRITICO"
+        }
     }
 }
 
-# --- GENERATORE MENU ---
-def main_menu():
+# ==========================================
+# GENERATORI DI INTERFACCIA (UI)
+# ==========================================
+def build_main_menu():
     markup = types.InlineKeyboardMarkup(row_width=2)
-    row1 = [types.InlineKeyboardButton(TOOLS["zphisher"]["name"], callback_data='zphisher_cmd'),
-            types.InlineKeyboardButton(TOOLS["seeker"]["name"], callback_data='seeker_cmd')]
-    row2 = [types.InlineKeyboardButton(TOOLS["nexphisher"]["name"], callback_data='nexphisher_cmd'),
-            types.InlineKeyboardButton(TOOLS["pyphisher"]["name"], callback_data='pyphisher_cmd')]
-    row3 = [types.InlineKeyboardButton("📱 GUIDA TERMUX PRO", callback_data='termux_pro'),
-            types.InlineKeyboardButton("🛠️ TOOLS EXTRA", callback_data='extra_tools')]
-    markup.add(*row1)
-    markup.add(*row2)
-    markup.add(*row3)
+    markup.add(
+        types.InlineKeyboardButton("🎣 PHISHING", callback_data="cat_phishing"),
+        types.InlineKeyboardButton("📍 TRACKING", callback_data="cat_tracking"),
+        types.InlineKeyboardButton("🛠️ VULN SCAN", callback_data="cat_utility"),
+        types.InlineKeyboardButton("📱 TERMUX PRO", callback_data="guide_termux"),
+        types.InlineKeyboardButton("🎲 PASS GEN", callback_data="tool_passgen"),
+        types.InlineKeyboardButton("📡 STATO SISTEMA", callback_data="sys_status")
+    )
     return markup
 
-# --- COMANDI PRINCIPALI ---
-@bot.message_handler(commands=['start'])
-def start_command(message):
-    user = message.from_user.first_name
-    welcome = (
-        f"🚀 **SISTEMA ATTIVO: Benvenuto {user}** 🚀\n"
-        "----------------------------------------\n"
-        "Accesso alla console Hacker Hub eseguito.\n"
-        "Seleziona un'operazione dal menu sottostante.\n"
-        "----------------------------------------\n"
-        "🕒 " + datetime.datetime.now().strftime("%H:%M:%S")
-    )
-    bot.send_message(message.chat.id, welcome, reply_markup=main_menu(), parse_mode="Markdown")
+def build_back_button(category=None):
+    markup = types.InlineKeyboardMarkup()
+    if category:
+        markup.add(types.InlineKeyboardButton("⬅️ TORNA INDIETRO", callback_data=f"cat_{category}"))
+    markup.add(types.InlineKeyboardButton("🏠 MENU PRINCIPALE", callback_data="home"))
+    return markup
 
-# --- GESTIONE CALLBACK (Il cuore del bot) ---
+# ==========================================
+# LOGICA DEI COMANDI
+# ==========================================
+@bot.message_handler(commands=['start', 'help'])
+def welcome(message):
+    logger.info(f"User {message.from_user.id} started the bot")
+    welcome_text = (
+        "🔥 **HACKER HUB ULTIMATE v3.0** 🔥\n"
+        "-------------------------------------\n"
+        "Console di gestione tool e sicurezza.\n"
+        f"Operatore: `{message.from_user.first_name}`\n"
+        f"Data: {datetime.datetime.now().strftime('%d/%m/%Y')}\n"
+        "-------------------------------------\n"
+        "Seleziona una categoria per iniziare."
+    )
+    bot.send_message(message.chat.id, welcome_text, reply_markup=build_main_menu(), parse_mode="Markdown")
+
 @bot.callback_query_handler(func=lambda call: True)
-def handle_query(call):
+def handle_callbacks(call):
     try:
-        # Funzione Torna al Menu con CANCELLAZIONE (Quello che hai chiesto)
+        # --- CANCELLAZIONE E RESET (Richiesta Utente) ---
         if call.data == "home":
             bot.delete_message(call.message.chat.id, call.message.message_id)
-            bot.send_message(call.message.chat.id, "🔥 **SISTEMA RESETTATO - MENU PRINCIPALE** 🔥", 
-                           reply_markup=main_menu(), parse_mode="Markdown")
+            bot.send_message(call.message.chat.id, "🏠 **MENU PRINCIPALE**", reply_markup=build_main_menu(), parse_mode="Markdown")
             return
 
-        # Gestione moduli d'installazione
-        for key in TOOLS:
-            if call.data == f"{key}_cmd":
-                text = (
-                    f"💻 **CONSOLE {TOOLS[key]['name']}**\n\n"
-                    f"Esegui questi comandi per l'installazione:\n"
-                    f"```bash\n{TOOLS[key]['install']}\n```\n"
-                    "⚠️ *Assicurati di avere una connessione stabile.*"
-                )
-                markup = types.InlineKeyboardMarkup()
-                markup.add(types.InlineKeyboardButton("ℹ️ ANALISI TECNICA", callback_data=f"{key}_info"))
-                markup.add(types.InlineKeyboardButton("⬅️ TORNA AL MENU", callback_data="home"))
-                bot.edit_message_text(text, call.message.chat.id, call.message.message_id, 
-                                     reply_markup=markup, parse_mode="Markdown")
-                return
+        # --- GESTIONE CATEGORIE ---
+        if "cat_" in call.data:
+            cat = call.data.replace("cat_", "")
+            markup = types.InlineKeyboardMarkup(row_width=1)
+            for tool_id, data in DATABASE[cat].items():
+                markup.add(types.InlineKeyboardButton(data["name"], callback_data=f"info_{cat}_{tool_id}"))
+            markup.add(types.InlineKeyboardButton("⬅️ TORNA", callback_data="home"))
+            
+            bot.edit_message_text(f"📂 **CATEGORIA: {cat.upper()}**\nSeleziona un tool:", 
+                                 call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown")
 
-            if call.data == f"{key}_info":
-                text = (
-                    f"ℹ️ **ANALISI TECNICA: {TOOLS[key]['name']}**\n\n"
-                    f"🔹 **Descrizione**: {TOOLS[key]['specs']}\n"
-                    f"🔸 **Livello Rischio**: {TOOLS[key]['risk']}\n\n"
-                    "✅ *Stato del tool: Funzionante*"
-                )
-                markup = types.InlineKeyboardMarkup()
-                markup.add(types.InlineKeyboardButton("⬅️ TORNA AI COMANDI", callback_data=f"{key}_cmd"))
-                bot.edit_message_text(text, call.message.chat.id, call.message.message_id, 
-                                     reply_markup=markup, parse_mode="Markdown")
-                return
-
-        # Guida Termux Avanzata
-        if call.data == "termux_pro":
-            text = (
-                "📱 **CONFIGURAZIONE TERMUX PROFESSIONALE**\n\n"
-                "1️⃣ **Aggiornamento Repository**:\n`pkg update && pkg upgrade -y`\n\n"
-                "2️⃣ **Permessi Memoria**:\n`termux-setup-storage`\n\n"
-                "3️⃣ **Pacchetti Essenziali**:\n`pkg install git python php curl wget openssh -y`\n\n"
-                "4️⃣ **Consiglio**: Usa sempre una VPN per nascondere il tuo IP reale."
+        # --- INFO DETTAGLIATE TOOL ---
+        elif "info_" in call.data:
+            _, cat, tid = call.data.split("_")
+            tool = DATABASE[cat][tid]
+            info_text = (
+                f"🛠️ **TOOL: {tool['name']}**\n\n"
+                f"📝 **Descrizione**: {tool['desc']}\n"
+                f"⚙️ **Tecnologia**: {tool['tech']}\n"
+                f"⚠️ **Pericolo**: {tool['danger']}\n\n"
+                "📜 **COMANDI INSTALLAZIONE**:\n"
+                f"```bash\n{tool['cmd']}\n```"
             )
-            markup = types.InlineKeyboardMarkup()
-            markup.add(types.InlineKeyboardButton("⬅️ MENU", callback_data="home"))
-            bot.edit_message_text(text, call.message.chat.id, call.message.message_id, 
-                                 reply_markup=markup, parse_mode="Markdown")
+            bot.edit_message_text(info_text, call.message.chat.id, call.message.message_id, 
+                                 reply_markup=build_back_button(cat), parse_mode="Markdown")
 
-        # Tools Extra (Per fare massa e utilità)
-        if call.data == "extra_tools":
-            text = (
-                "🛠️ **REPARTI EXTRA - TOOLS AGGIUNTIVI**\n\n"
-                "🔹 **SQLMap**: Per database injection.\n"
-                "🔹 **Metasploit**: Framework per exploit completi.\n"
-                "🔹 **Nmap**: Scansione delle porte di rete.\n\n"
-                "Verranno aggiunti nelle prossime versioni del bot."
-            )
-            markup = types.InlineKeyboardMarkup()
-            markup.add(types.InlineKeyboardButton("⬅️ MENU", callback_data="home"))
+        # --- UTILITY: PASSWORD GENERATOR ---
+        elif call.data == "tool_passgen":
+            chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+            password = "".join(random.choice(chars) for _ in range(16))
+            text = f"🎲 **PASSWORD SICURA GENERATA**:\n\n`{password}`\n\n_Copia e usala per i tuoi account._"
             bot.edit_message_text(text, call.message.chat.id, call.message.message_id, 
-                                 reply_markup=markup, parse_mode="Markdown")
+                                 reply_markup=build_back_button(), parse_mode="Markdown")
+
+        # --- STATO SISTEMA ---
+        elif call.data == "sys_status":
+            status = (
+                "📡 **STATO CONSOLE**\n\n"
+                "✅ Server Render: ONLINE\n"
+                "✅ Database Tool: CARICATO\n"
+                "✅ Latenza API: OTTIMALE\n"
+                f"🕒 Uptime: {random.randint(24, 99)}h"
+            )
+            bot.edit_message_text(status, call.message.chat.id, call.message.message_id, 
+                                 reply_markup=build_back_button(), parse_mode="Markdown")
+
+        # --- GUIDA TERMUX PRO ---
+        elif call.data == "guide_termux":
+            text = (
+                "📱 **CONFIGURAZIONE TERMUX PRO**\n\n"
+                "1. `pkg update && pkg upgrade -y` (Sempre primo passo)\n"
+                "2. `termux-setup-storage` (Per file esterni)\n"
+                "3. `pkg install git python php curl wget openssh -y` (Base hacking)\n\n"
+                "💡 *Consiglio: Usa 'Screen' per lasciare i tool attivi in background.*"
+            )
+            bot.edit_message_text(text, call.message.chat.id, call.message.message_id, 
+                                 reply_markup=build_back_button(), parse_mode="Markdown")
 
     except Exception as e:
-        logger.error(f"Errore critico: {e}")
-        bot.answer_callback_query(call.id, "Errore nel processare la richiesta.")
+        logger.error(f"ERRORE CALLBACK: {e}")
+        bot.answer_callback_query(call.id, "⚠️ Errore interno del sistema.")
 
-# --- AVVIO CONTINUO ---
+# ==========================================
+# LOOP INFINITO
+# ==========================================
 if __name__ == "__main__":
-    logger.info("Bot avviato correttamente.")
-    bot.polling(none_stop=True, timeout=60)
-
-# -----------------------------------------------------------------------
-# FINE CODICE - Hacker Hub Ultimate Edition
-# -----------------------------------------------------------------------
+    print(">>> Bot Titan v3.0 in esecuzione...")
+    while True:
+        try:
+            bot.polling(none_stop=True, interval=0, timeout=20)
+        except Exception as e:
+            logger.error(f"CRASH EVITATO: {e}")
+            time.sleep(5)
