@@ -1,10 +1,8 @@
 import telebot
 from telebot import types
 
-# --- IL TUO TOKEN È GIÀ INSERITO ---
+# Token già inserito e verificato
 API_TOKEN = '8461004019:AAHKN207J0ot8LKlc7t8CVhHiQ2xz4t0ua8'
-# ------------------------------------
-
 bot = telebot.TeleBot(API_TOKEN)
 
 @bot.message_handler(commands=['start'])
@@ -16,13 +14,12 @@ def send_welcome(message):
     btn4 = types.InlineKeyboardButton("🐍 PyPhisher", callback_data='pyphisher_cmd')
     markup.add(btn1, btn2, btn3, btn4)
     
-    bot.reply_to(message, "🔥 **BENVENUTO NEL BOT HACKER** 🔥\nScegli un tool per vedere i comandi di installazione:", reply_markup=markup, parse_mode="Markdown")
+    bot.reply_to(message, "🔥 **BENVENUTO NEL BOT HACKER** 🔥\nScegli un tool per vedere i comandi:", reply_markup=markup, parse_mode="Markdown")
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
     markup = types.InlineKeyboardMarkup()
     
-    # Livello 1: COMANDI
     if "_cmd" in call.data:
         tool = call.data.replace("_cmd", "")
         if tool == "zphisher":
@@ -36,13 +33,25 @@ def callback_inline(call):
         
         info_btn = types.InlineKeyboardButton("ℹ️ INFORMAZIONI", callback_data=f"{tool}_info")
         back_btn = types.InlineKeyboardButton("⬅️ TORNA AL MENU", callback_data='home')
-        markup.add(info_btn)
-        markup.add(back_btn)
+        markup.add(info_btn, back_btn)
 
-    # Livello 2: INFORMAZIONI
     elif "_info" in call.data:
         tool = call.data.replace("_info", "")
-        if tool == "zphisher":
-            text = "ℹ️ **INFO ZPHISHER**:\nTool di phishing con oltre 30 template pronti per social e siti web."
-        elif tool == "seeker":
-            text = "ℹ️ **INFO SEEKER**:\nTrova la posizione esatta (GPS) del bers
+        descriptions = {
+            "zphisher": "Tool di phishing con oltre 30 template social.",
+            "seeker": "Localizza il bersaglio tramite GPS con un link.",
+            "nexphisher": "Phishing avanzato con supporto tunneling.",
+            "pyphisher": "Tool Python con 70+ template e mascheramento."
+        }
+        text = f"ℹ️ **INFO {tool.upper()}**:\n{descriptions.get(tool, 'Descrizione non disponibile.')}"
+        back_btn = types.InlineKeyboardButton("⬅️ TORNA AI COMANDI", callback_data=f"{tool}_cmd")
+        markup.add(back_btn)
+
+    elif call.data == "home":
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        send_welcome(call.message)
+        return
+
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=markup, parse_mode="Markdown")
+
+bot.polling()
